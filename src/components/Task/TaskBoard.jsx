@@ -3,16 +3,10 @@ import SearchTask from "./SearchTask";
 import TaskActions from "./TaskActions";
 import TaskLists from "./TaskLists";
 import AddTaskModal from "./AddTaskModal";
+import NoTasksFound from "./NoTasksFound";
 
 const TaskBoard = () => {
-  const [tasks, setTasks] = useState([{
-    id: crypto.randomUUID(),
-    title: "Learn React",
-    description: "Learning React is fun!",
-    tags: ["javaScript", "react", "frontEnd"],
-    priority: "medium",
-    isFavorite: false
-  }]);
+  const [tasks, setTasks] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [taskToUpdate, setTaskToUpdate] = useState(null)
 
@@ -29,7 +23,7 @@ const TaskBoard = () => {
         }
         return task
       }))
-
+      setTaskToUpdate(null)
     }
     setShowModal(false);
 
@@ -38,19 +32,44 @@ const TaskBoard = () => {
     setTaskToUpdate(task)
     setShowModal(true)
   }
+  const handleDeleteTask = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id))
+  }
+  const handleDeleteAllTasks = () => {
+    setTasks([])
+  }
   const handleClose = () => {
     setShowModal(false)
     setTaskToUpdate(null)
+  }
+  const handleSearch = (searchTerm) => {
+    const filteredTasks = tasks.filter((task) => task.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    setTasks(filteredTasks)
+  }
+  const handleAddTaskToFavorite = (id) => {
+    setTasks(tasks.map((task) => {
+      if (task.id == id) {
+        return {
+          ...task,
+          isFavorite: !task.isFavorite
+        }
+      }
+      return task
+    }))
   }
   return (
     <section className="mb-20" id="tasks">
       {showModal && <AddTaskModal onAddTask={handleAddTask} taskToUpdate={taskToUpdate} onCloseClick={handleClose} />}
       <div className="container">
-        <SearchTask />
-        <div className="rounded-xl border border-[rgba(206,206,206,0.12)] bg-[#1D212B] px-6 py-8 md:px-9 md:py-16">
-          <TaskActions onShowModal={() => setShowModal(true)} />
-          <TaskLists tasks={tasks} onEdit={handleEdit} />
-        </div>
+        <SearchTask onSearch={handleSearch} />
+        <TaskActions onShowModal={() => setShowModal(true)} onDeleteAllTasks={handleDeleteAllTasks} />
+        {
+          tasks.length > 0 ?
+            <TaskLists tasks={tasks} onEdit={handleEdit} onDelete={handleDeleteTask}
+              onAddFavorite={handleAddTaskToFavorite} />
+            :
+            <NoTasksFound />
+        }
       </div>
     </section>
   );
